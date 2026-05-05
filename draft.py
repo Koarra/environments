@@ -1,47 +1,18 @@
+Step 1 — Find DomCo cases with SCAP-1
+grep -rl "Domiciliary Company" OUTPUT_FOLDER/*/*/edd_text_parser.json | \
+  xargs grep -l "SCAP-1"
+This gives you all cases that are DomCo + sensitive country — candidates for Scenario 1 or 2.
 
+Step 2 — Among those, check BO SCAP results
+# Find cases where NO BO has SCAP-1 active → Scenario 1
+grep -rL "SCAP1 Compliance: Active" OUTPUT_FOLDER/<case_number>/*/kyc_checks_output.json
 
-def load_files(self, base_folder):
-    """Create a dictionary from the folder structure."""
-    files = {}
-    base_path = Path(base_folder)
-    
-    print(f"Base folder: {base_path.absolute()}")
-    print(f"Exists: {base_path.exists()}")
-    
-    # Let's see what's actually in the base folder
-    print("\n=== Contents of base folder ===")
-    if base_path.exists():
-        for item in sorted(base_path.iterdir()):
-            print(f"  {item.name} ({'dir' if item.is_dir() else 'file'})")
-    
-    # Try to find DO-* folders
-    print("\n=== Looking for DO-* folders ===")
-    do_folders = list(base_path.glob("DO-*"))
-    print(f"Found {len(do_folders)} DO-* folders")
-    for folder in do_folders:
-        print(f"  - {folder.name}")
-    
-    # If we have DO-* folders, look inside them
-    if do_folders:
-        print("\n=== Contents of first DO-* folder ===")
-        first_do = do_folders[0]
-        for item in sorted(first_do.iterdir()):
-            print(f"  {item.name} ({'dir' if item.is_dir() else 'file'})")
-    
-    # Try different glob patterns to see what matches
-    print("\n=== Testing different patterns ===")
-    patterns = [
-        "**/*.pdf",  # All PDFs anywhere
-        "DO-*/**/*.pdf",  # All PDFs under DO-* folders
-        "DO-*/partners/*/client history/*.pdf",  # Your original pattern
-        "DO-*/partners/*/*.pdf",  # Without "client history"
-    ]
-    
-    for pattern in patterns:
-        matches = list(base_path.glob(pattern))
-        print(f"{pattern}: {len(matches)} files")
-        if matches and len(matches) <= 5:
-            for match in matches[:5]:
-                print(f"    {match.relative_to(base_path)}")
-    
-    return files
+# Find cases where AT LEAST ONE BO has SCAP-1 active → Scenario 2
+grep -rl "SCAP1 Compliance: Active" OUTPUT_FOLDER/<case_number>/*/kyc_checks_output.json
+Step 3 — Find non-DomCo cases → Scenario 3
+grep -rl "Operating Company\|Trust\|Individual" OUTPUT_FOLDER/*/*/edd_text_parser.json
+Verify the exclusion fired (Scenario 1)
+Once you have a candidate case, check the DomCo's own kyc_checks_output.json:
+
+grep -r "SCAP-1 excluded" OUTPUT_FOLDER/<case_number>/
+If it's there — exclusion fired. If not — SCAPGraph ran instead.
