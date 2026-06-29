@@ -1,0 +1,3 @@
+tmux attach -t main
+tmux ls
+tmux switch-client -t main
