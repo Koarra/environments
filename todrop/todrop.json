@@ -1,8 +1,39 @@
-Cache identical calls so you pay once. LangChain has a built-in LLM cache (set_llm_cache with SQLiteCache or in-memory). With the same prompt + params, the first call hits OpenAI and every repeat is free. This alone is huge when you re-run a test suite, since most calls are identical across runs.
-Record once, replay forever (the big one for test suites). Use VCR-style cassettes — vcrpy or the pytest-recording plugin — to capture real HTTP responses on the first run and replay them from disk after that. Your tests then run offline, deterministically, and at zero cost. You only re-record when a prompt or model genuinely changes. This is the single most effective pattern for "I want to test lots of cases repeatedly."
-Mock the LLM entirely where you're testing logic, not model output. LangChain ships FakeListLLM / FakeListChatModel / GenericFakeChatModel that return scripted responses. For LangGraph specifically, most of what you're testing is graph wiring — routing, state transitions, conditional edges, retries — not the model's prose. Swap in a fake model for those, and you can assert on control flow for free. Reserve real calls for the handful of tests that actually validate prompt quality.
-Use a cheaper model for the bulk of runs. Develop and iterate against gpt-4o-mini (or the cheapest model that exercises the same code paths), and reserve the expensive model for a final, smaller validation pass. The structure of your graph behaves the same; you're just paying far less per token while iterating.
-Shrink and cap what you do send. Set max_tokens on outputs so a runaway response can't drain credits, trim prompts to the minimum that reproduces the case, and prune conversation state in long LangGraph runs so you're not resending accumulated history every node.
-Run real-API tests deliberately, not by default. Mark them (@pytest.mark.llm or similar) and exclude them from the normal loop, so your fast inner loop is fully mocked/replayed and you only spend credits when you explicitly opt in.
-A practical layering that works well: fake models for graph-logic tests → cached/replayed cassettes for integration tests → a small, gated set of live calls against the real model for final validation. You get to test hundreds of cases continuously while real spend stays near zero.
-A couple of things would let me give you something more concrete: are these tests mostly checking graph behavior (routing, state, tool calls) or the actual quality of model outputs? And are you using pytest? If so, I can sketch the actual fixtures and a sample cassette/fake-model setup for your LangGraph nodes.
+
+
+I am attaching a policy guidance PDF. Please do the following:
+
+1. **Extract the core policy rules** — what activities are in scope, what thresholds apply (ownership %, income %, revenue), what roles qualify, and what is explicitly excluded.
+
+2. **Extract cooldown rules** — any time-based conditions under which former exposure becomes "cooled down."
+
+3. **Note any overlaps or ambiguities** — cases where the same activity could fall under multiple categories or where the guidance is unclear.
+
+4. **Output a markdown file** with this structure:
+
+```
+---
+title: <policy name>
+source: <PDF filename>
+date: <today's date>
+---
+
+# <Policy name>
+
+## In-scope activities
+...
+
+## Qualification thresholds
+...
+
+## Out-of-scope exclusions
+...
+
+## Cooldown rules
+...
+
+## Ambiguities and open questions
+...
+
+
+Be precise and literal — quote the guidance directly where the wording matters. Do not infer or generalise beyond what the document states.
+
